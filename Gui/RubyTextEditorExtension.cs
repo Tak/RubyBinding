@@ -73,7 +73,15 @@ namespace MonoDevelop.RubyBinding
 		
 		public override  IParameterDataProvider HandleParameterCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
-			return ((char.IsWhiteSpace (completionChar) || '(' == completionChar))? new ParameterDataProvider (Document, completionContext): null;
+			IParameterDataProvider ipdp = null;
+			
+			if (char.IsWhiteSpace (completionChar) || '(' == completionChar) {
+				try {
+					ipdp = new ParameterDataProvider (Document, completionContext);
+				} catch { }
+			}
+			
+			return ipdp;
 		}
 	}// RubyTextEditorExtension
 }

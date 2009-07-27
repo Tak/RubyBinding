@@ -219,7 +219,7 @@ namespace MonoDevelop.RubyBinding
 			if (0 != runstatus) {
 				Console.WriteLine ("Evaluation failed: {0}", runstatus);
 				rb_eval_string_wrap ("puts($!)", ref runstatus);
-				return new string[0];
+				return null;
 			}
 			
 			int arity = int.Parse (FromRubyString (arityval));

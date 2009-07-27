@@ -68,6 +68,9 @@ namespace MonoDevelop.RubyBinding
 			}
 			
 			methodParams = RubyCompletion.GetMethodArguments (basepath, contents, context.TriggerLine-1, owner, method);
+			if (null == methodParams) {
+				throw new Exception (string.Format ("Unable to complete method {0}", method));
+			}
 		}// constructor
 
 		#region IParameterDataProvider implementation
