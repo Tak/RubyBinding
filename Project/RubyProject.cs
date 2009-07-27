@@ -23,6 +23,7 @@
 
 using System;
 using System.Xml;
+using System.Collections.Generic;
 
 using MonoDevelop.Projects;
 using MonoDevelop.Core;
@@ -78,7 +79,7 @@ namespace MonoDevelop.RubyBinding
 			bool pause = conf.PauseConsoleOutput;
 			IConsole console = (conf.ExternalConsole? context.ExternalConsoleFactory: context.ConsoleFactory).CreateConsole (!pause);
 			
-			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile);
+			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile, BaseDirectory, new Dictionary<string,string>(){{"RUBYLIB", BaseDirectory}});
 			
 			monitor.Log.WriteLine ("Running {0} {1}", RubyLanguageBinding.RubyInterpreter, conf.MainFile);
 			
