@@ -24,7 +24,9 @@
 
 
 using System;
+using System.Collections;
 
+using MonoDevelop.Core.Gui;
 using MonoDevelop.Projects;
 using MonoDevelop.Core.Serialization;
 
@@ -35,11 +37,32 @@ namespace MonoDevelop.RubyBinding
 		[ItemProperty("MainFile")]
 		public string MainFile{ get; set; }
 		
+		[ItemProperty ("LoadPaths")]
+		[ItemProperty ("LoadPath", Scope = "*", ValueType = typeof(string))]
+		public ArrayList LoadPaths{ get; set; }
+		
+		public RubyProjectConfiguration (): base()
+		{
+			LoadPaths = new ArrayList ();
+		}
+		
 		public override void CopyFrom (ItemConfiguration configuration)
 		{
-			base.CopyFrom (configuration);
-			RubyProjectConfiguration conf = (RubyProjectConfiguration)configuration;
-			MainFile = conf.MainFile;
-		}
-	}
+			try {
+				base.CopyFrom (configuration);
+				RubyProjectConfiguration conf = (RubyProjectConfiguration)configuration;
+				MainFile = conf.MainFile;
+				LoadPaths = new ArrayList ();
+				if (null != conf.LoadPaths) {
+					foreach (object path in conf.LoadPaths) {
+						if (!string.IsNullOrEmpty ((string)path)) {
+							LoadPaths.Add (path);
+						}
+					}
+				}
+			} catch (Exception e) {
+				MessageService.ShowException (e);
+			}
+		}// CopyFrom
+	}// RubyProjectConfiguration
 }

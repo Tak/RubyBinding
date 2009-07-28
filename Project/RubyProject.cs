@@ -22,7 +22,9 @@
 // 
 
 using System;
+using System.IO;
 using System.Xml;
+using System.Collections;
 using System.Collections.Generic;
 
 using MonoDevelop.Projects;
@@ -78,8 +80,14 @@ namespace MonoDevelop.RubyBinding
 			RubyProjectConfiguration conf = (RubyProjectConfiguration)GetConfiguration (configuration);
 			bool pause = conf.PauseConsoleOutput;
 			IConsole console = (conf.ExternalConsole? context.ExternalConsoleFactory: context.ConsoleFactory).CreateConsole (!pause);
+			List<string> loadPaths = new List<string> ();
+			loadPaths.Add (BaseDirectory.FullPath);
+			foreach (object path in conf.LoadPaths) {
+				if (!string.IsNullOrEmpty ((string)path)){ loadPaths.Add ((string)path); }
+			}
 			
-			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile, BaseDirectory, new Dictionary<string,string>(){{"RUBYLIB", BaseDirectory}});
+			ExecutionCommand cmd = new NativeExecutionCommand (RubyLanguageBinding.RubyInterpreter, conf.MainFile, BaseDirectory, 
+			                                                   new Dictionary<string,string>(){{"RUBYLIB", string.Join (Path.DirectorySeparatorChar.ToString(), loadPaths.ToArray ()) }});
 			
 			monitor.Log.WriteLine ("Running {0} {1}", RubyLanguageBinding.RubyInterpreter, conf.MainFile);
 			

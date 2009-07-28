@@ -23,10 +23,14 @@
 
 
 using System;
+using System.IO;
+using System.Collections;
 using Gtk;
 
 using MonoDevelop.Projects;
 using MonoDevelop.Projects.Gui.Dialogs;
+using MonoDevelop.Core;
+using MonoDevelop.Core.Gui;
 using MonoDevelop.Core.Gui.Dialogs;
 
 namespace MonoDevelop.RubyBinding
@@ -34,17 +38,21 @@ namespace MonoDevelop.RubyBinding
 	/// <summary>
 	/// Panel for Ruby-specific options
 	/// </summary>
-	/// <remarks>
-	/// Currently limited to startup selection
-	/// </remarks>
 	[System.ComponentModel.ToolboxItem(true)]
 	public partial class GeneralOptionsPanel : Gtk.Bin
 	{
 		RubyProjectConfiguration config;
+		Gtk.ListStore loadpathStore = new Gtk.ListStore (typeof(string));
 		
 		public GeneralOptionsPanel()
 		{
 			this.Build();
+			
+			Gtk.CellRendererText textRenderer = new Gtk.CellRendererText ();
+			
+			loadpathTreeView.Model = loadpathStore;
+			loadpathTreeView.HeadersVisible = false;
+			loadpathTreeView.AppendColumn ("Load Path", textRenderer, "text", 0);
 		}
 		
 		public GeneralOptionsPanel (RubyProject project, RubyProjectConfiguration config): this ()
@@ -67,17 +75,72 @@ namespace MonoDevelop.RubyBinding
 				++count;
 			}
 			projectFilesCB.Active = found;
+			foreach (object path in config.LoadPaths) {
+				if (!string.IsNullOrEmpty ((string)path)) {
+					loadpathStore.AppendValues (path);
+				}
+			}
 			
 			return true;
 		}
 		
 		public bool Store ()
 		{
-			if (null != config) {
-				config.MainFile = projectFilesCB.ActiveText;
-				return true;
+			if (null == config) { return false; }
+			
+			TreeIter iter;
+			string line;
+			
+			config.MainFile = projectFilesCB.ActiveText;
+			config.LoadPaths.Clear ();
+			for (loadpathStore.GetIterFirst (out iter);
+			     loadpathStore.IterIsValid (iter);
+			     loadpathStore.IterNext (ref iter)) {
+				line = (string)loadpathStore.GetValue (iter, 0);
+				if (!string.IsNullOrEmpty (line)){ config.LoadPaths.Add (line); }
 			}
-			return false;
+			return true;
+		}
+
+		protected virtual void loadpathAddEntryChanged (object sender, System.EventArgs e)
+		{
+			addLoadpathButton.Sensitive = Directory.Exists (loadpathAddEntry.Text);
+		}
+
+		protected virtual void loadpathAddButtonClicked (object sender, System.EventArgs e)
+		{
+			string path = loadpathAddEntry.Text;
+			if (!string.IsNullOrEmpty (path)) {
+				loadpathStore.AppendValues (path);
+			}
+		}
+
+		protected virtual void browseButtonClicked (object sender, System.EventArgs e)
+		{
+			FileChooserDialog fcd = new FileChooserDialog (GettextCatalog.GetString ("Choose Load Path"), null, FileChooserAction.SelectFolder, 
+			                                               Gtk.Stock.Cancel, Gtk.ResponseType.Cancel, Gtk.Stock.Open, Gtk.ResponseType.Ok);
+			try {
+				if (fcd.Run() == (int)ResponseType.Ok) {
+					loadpathAddEntry.Text = fcd.Filename;
+				}
+			} finally {
+				fcd.Destroy ();
+			}
+		}
+
+		protected virtual void removeLoadpathButtonClicked (object sender, System.EventArgs e)
+		{
+			TreeIter iter;
+			if (loadpathTreeView.Selection.GetSelected (out iter)) {
+				loadpathStore.Remove (ref iter);
+			}
+			loadpathTreeViewCursorChanged (sender, e);
+		}
+
+		protected virtual void loadpathTreeViewCursorChanged (object sender, System.EventArgs e)
+		{
+			removeLoadpathButton.Sensitive = (null != loadpathTreeView.Selection && 
+			                                  0 < loadpathTreeView.Selection.CountSelectedRows ());
 		}
 	}
     
