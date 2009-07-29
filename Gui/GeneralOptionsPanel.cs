@@ -36,7 +36,7 @@ using MonoDevelop.Core.Gui.Dialogs;
 namespace MonoDevelop.RubyBinding
 {
 	/// <summary>
-	/// Panel for Ruby-specific options
+	/// Panel for Ruby-specific runtime options
 	/// </summary>
 	[System.ComponentModel.ToolboxItem(true)]
 	public partial class GeneralOptionsPanel : Gtk.Bin
@@ -112,6 +112,7 @@ namespace MonoDevelop.RubyBinding
 			string path = loadpathAddEntry.Text;
 			if (!string.IsNullOrEmpty (path)) {
 				loadpathStore.AppendValues (path);
+				loadpathAddEntry.Text = string.Empty;
 			}
 		}
 
@@ -121,7 +122,9 @@ namespace MonoDevelop.RubyBinding
 			                                               Gtk.Stock.Cancel, Gtk.ResponseType.Cancel, Gtk.Stock.Open, Gtk.ResponseType.Ok);
 			try {
 				if (fcd.Run() == (int)ResponseType.Ok) {
-					loadpathAddEntry.Text = fcd.Filename;
+					if (!string.IsNullOrEmpty (fcd.Filename)) {
+						loadpathStore.AppendValues (fcd.Filename);
+					}
 				}
 			} finally {
 				fcd.Destroy ();
