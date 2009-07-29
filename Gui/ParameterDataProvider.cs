@@ -35,6 +35,8 @@ namespace MonoDevelop.RubyBinding
 		string owner;
 		string[] methodParams;
 		
+		public bool Valid{ get; protected set; }
+		
 		public ParameterDataProvider (Document doc, ICodeCompletionContext context)
 		{
 			this.doc = doc;
@@ -68,9 +70,7 @@ namespace MonoDevelop.RubyBinding
 			}
 			
 			methodParams = RubyCompletion.GetMethodArguments (basepath, contents, context.TriggerLine-1, owner, method);
-			if (null == methodParams) {
-				throw new Exception (string.Format ("Unable to complete method {0}", method));
-			}
+			Valid = (null != methodParams);
 		}// constructor
 
 		#region IParameterDataProvider implementation
@@ -99,7 +99,7 @@ namespace MonoDevelop.RubyBinding
 			return (methodParams.Length >= parameterIndex)? parameterIndex: -1;
 		}// GetCurrentParameterIndex
 		
-		public string GetMethodMarkup (int overload, string[] parameterMarkup)
+		public string GetMethodMarkup (int overload, string[] parameterMarkup, int currentParameter)
 		{
 			return string.IsNullOrEmpty (method)? null: string.Format ("<b>{0}</b>({1})", GLib.Markup.EscapeText (method), string.Join (", ", parameterMarkup));
 		}
