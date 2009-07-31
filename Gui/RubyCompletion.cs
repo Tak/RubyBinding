@@ -64,8 +64,10 @@ namespace MonoDevelop.RubyBinding
 		 * Operator - (list)
 		 * Variables/method calls/everything elsse
 #endif
-		static RubyCompletion () {
-			// TODO: Does this always happen on the main thread?
+		static bool initialized = false;
+
+		static void initialize () {
+			if (initialized){ return; }
 			DispatchService.GuiSyncDispatch (delegate () {
 				Console.WriteLine ("Initializing RubyCompletion");
 				string scriptname = "monodevelop_ruby_parser";
@@ -73,6 +75,7 @@ namespace MonoDevelop.RubyBinding
 				ruby_script (scriptname);
 				ruby_set_argv (1, new string[]{scriptname});
 				ruby_init_loadpath ();
+				initialized = true;
 				Console.WriteLine ("Done initializing RubyCompletion");
 			});
 		}
@@ -164,11 +167,15 @@ namespace MonoDevelop.RubyBinding
 		{
 			return GuiThreadSync<List<Error>> (delegate() {
 				int runstatus = 0;
-				Init_stack(ref runstatus);
 				StringBuilder sb = new StringBuilder ();
-				sb.AppendFormat ("$LOAD_PATH << '{0}'{1}", basepath, Environment.NewLine);
+				sb.AppendLine (string.Format ("$LOAD_PATH << '{0}'", basepath));
+				sb.AppendLine ("$SAFE = 2");
 				sb.AppendLine ("(__LINE__-1).to_s");
 				int baseline = 0;
+				
+				initialize ();
+				Init_stack(ref runstatus);
+				
 				int.TryParse (FromRubyString (rb_eval_string_wrap (sb.ToString (), ref runstatus)), out baseline);
 				if (0 != runstatus) {
 					rb_eval_string_wrap ("puts($!)", ref runstatus);
@@ -221,6 +228,10 @@ namespace MonoDevelop.RubyBinding
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			string joiner = string.IsNullOrEmpty (owner)? string.Empty: ".";
 			lines[line] = string.Empty;
+			lines.Insert (0, "$SAFE = 2");
+			
+			initialize ();
+			Init_stack (ref runstatus);
 			
 			IntPtr arityval = EvaluateInContext (basepath, lines, string.Format ("{0}{1}method('{2}').arity.to_s", owner, joiner, method), line, ref runstatus);
 			
@@ -308,18 +319,21 @@ namespace MonoDevelop.RubyBinding
 		{
 			ICompletionData[] rv = null;
 			int runstatus = 0;
-			Init_stack(ref runstatus);
 			StringBuilder sb = new StringBuilder ();
 			List<string> lines = new List<string> (contents.Split ('\n'));
 			
+			initialize ();
+			Init_stack(ref runstatus);
+			
 			lines[line] = symbol;
+			lines.Insert (0, "$SAFE = 2");
 			
 			symbol = symbol.Replace ("'", "\\'");
 			sb.Append ("eval('[$!");
 			for (int i=0; i < completors.GetLength (0); ++i) {
 				sb.AppendFormat (", {0}{1}", symbol, completors[i, 0]);
 			}
-			sb.AppendLine (string.Format ("]', $monodevelop_bindings[{0}])", line + 2));
+			sb.AppendLine (string.Format ("]', $monodevelop_bindings[{0}])", line + 3));
 
 			IntPtr raw_completions = EvaluateInContext (basepath, lines, sb.ToString (), line, ref runstatus);
 			if (0 != runstatus) {
