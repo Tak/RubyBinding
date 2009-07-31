@@ -50,9 +50,14 @@ namespace MonoDevelop.RubyBinding
 		public override ICompletionDataList HandleCodeCompletion (ICodeCompletionContext completionContext, char completionChar)
 		{
 			CompletionDataList cdl = new CompletionDataList ();
-			if ('.' == completionChar) {
-				string contents = Editor.Text,
-				       symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-1);
+			string contents = null,
+			       symbol = null;
+			
+			switch (completionChar) {
+			case '.':
+				// Dot operator
+				contents = Editor.Text;
+				symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-1);
 				// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
 					string basepath = (null == Document.Project)? 
@@ -64,6 +69,27 @@ namespace MonoDevelop.RubyBinding
 						cdl.AddRange (completions);
 					}
 				}
+				break;
+			case ':':
+				// Scope operator
+				if (1 < completionContext.TriggerOffset && ':' == Editor.GetCharAt (completionContext.TriggerOffset-2)) {
+					contents = Editor.Text;
+					symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-2);
+					string[] tokens = symbol.Split (new string[]{"::"}, StringSplitOptions.None);
+					symbol = (1 < tokens.Length)? string.Join ("::", tokens, 0, tokens.Length-1): tokens[0];
+					// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
+					if (RubyCompletion.IsConstant (symbol)) {
+						string basepath = (null == Document.Project)? 
+							Document.FileName.FullPath.ParentDirectory: 
+							Document.Project.BaseDirectory.FullPath;
+						ICompletionData[] completions = RubyCompletion.Complete (basepath, contents, symbol, completionContext.TriggerLine-1);
+						if (null != completions) {
+							// Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
+							cdl.AddRange (completions);
+						}
+					}
+				}
+				break;
 			}
 			
 			// Zero-length list causes segfault

@@ -395,6 +395,13 @@ namespace MonoDevelop.RubyBinding
 			return result;
 		}// EvaluateInContext
 		
+		/// <summary>
+		/// Determines whether a given symbol is a constant
+		/// </summary>
+		public static bool IsConstant (string symbol) 
+		{
+			return (!string.IsNullOrEmpty (symbol) && char.IsUpper (symbol[0]));
+		}// IsConstant
 		
 		/// <summary>
 		/// A method for adding a completion result from a yielded name.
@@ -463,54 +470,54 @@ namespace MonoDevelop.RubyBinding
 		#region " Ruby native methods "
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);
+		static extern IntPtr rb_iterate (RubyFunction iterate_function, IntPtr iterate_arguments, YieldFunction yield_function, IntPtr extra_yield_arguments);
+		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_each (IntPtr collection);
+//		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_rescue (RubyFunction function, IntPtr arguments, RubyFunction exception_handler, IntPtr handler_arguments);
+//		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_gv_get (string variable_name);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_each (IntPtr collection);
+		static extern IntPtr rb_eval_string_wrap (string eval_text, ref int status);
+		
+//		[DllImport("ruby1.8")]
+//		static extern IntPtr rb_eval_string_protect (string eval_text, ref int status);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_rescue (RubyFunction function, IntPtr arguments, RubyFunction exception_handler, IntPtr handler_arguments);
+		static extern IntPtr rb_string_value_cstr (ref IntPtr rb_string);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_gv_get (string variable_name);
+		static extern void ruby_init ();
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_eval_string_wrap (string eval_text, ref int status);
+		static extern void ruby_init_loadpath ();
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_eval_string_protect (string eval_text, ref int status);
+		static extern void Init_stack (ref int cval);
 		
 		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_string_value_cstr (ref IntPtr rb_string);
+		static extern void ruby_set_argv (int argc, string[] argv);
 		
 		[DllImport("ruby1.8")]
-		public static extern void ruby_init ();
+		static extern void ruby_script (string scriptname);
+		
+//		[DllImport("ruby1.8")]
+//		static extern void ruby_finalize ();
 		
 		[DllImport("ruby1.8")]
-		public static extern void ruby_init_loadpath ();
+		static extern IntPtr rb_funcall (IntPtr owner, IntPtr id, int dunno);
 		
 		[DllImport("ruby1.8")]
-		public static extern void Init_stack (ref int cval);
+		static extern IntPtr rb_intern (string symbol);
 		
 		[DllImport("ruby1.8")]
-		public static extern void ruby_set_argv (int argc, string[] argv);
+		static extern IntPtr rb_ary_entry (IntPtr array, int index);
 		
-		[DllImport("ruby1.8")]
-		public static extern void ruby_script (string scriptname);
-		
-		[DllImport("ruby1.8")]
-		public static extern void ruby_finalize ();
-		
-		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_funcall (IntPtr owner, IntPtr id, int dunno);
-		
-		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_intern (string symbol);
-		
-		[DllImport("ruby1.8")]
-		public static extern IntPtr rb_ary_entry (IntPtr array, int index);
-		
-		public static readonly IntPtr Qnil = new IntPtr (4); // ruby.h
+		static readonly IntPtr Qnil = new IntPtr (4); // ruby.h
 		
 		#endregion
 		
