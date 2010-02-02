@@ -94,6 +94,7 @@ namespace MonoDevelop.RubyBinding
 				}
 				break;
 			default:
+				// Aggressive completion
 				if (char.IsLetter (completionChar)) {
 					ICompletionData[] completions = RubyCompletion.CompleteGlobal (BasePath, Editor.Text, completionContext.TriggerLine-1);
 					cdl.AddRange (completions);
@@ -106,6 +107,9 @@ namespace MonoDevelop.RubyBinding
 			return (0 < cdl.Count)? cdl: null;
 		}// HandleCodeCompletion
 		
+		/// <summary>
+		/// Move the completion trigger offset to the beginning of the current token
+		/// </summary>
 		protected virtual void ResetTriggerOffset (CodeCompletionContext completionContext)
 		{
 			int i = completionContext.TriggerOffset;
