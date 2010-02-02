@@ -42,6 +42,15 @@ namespace MonoDevelop.RubyBinding
 {
 	public class RubyTextEditorExtension: CompletionTextEditorExtension
 	{
+		protected virtual string BasePath
+		{
+			get {
+				return (null == Document.Project)? 
+				       Document.FileName.FullPath.ParentDirectory: 
+				       Document.Project.BaseDirectory.FullPath;
+			}
+		}
+		
 		public override bool ExtendsEditor (Document doc, IEditableTextBuffer editor)
 		{
 			return (Path.GetExtension (doc.FileName).Equals (RubyLanguageBinding.RubyExtension, StringComparison.OrdinalIgnoreCase));
@@ -60,10 +69,7 @@ namespace MonoDevelop.RubyBinding
 				symbol = RubyCompletion.GetSymbol (contents, completionContext.TriggerOffset-1);
 				// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 				if (!string.IsNullOrEmpty (symbol)) {
-					string basepath = (null == Document.Project)? 
-						Document.FileName.FullPath.ParentDirectory: 
-						Document.Project.BaseDirectory.FullPath;
-					ICompletionData[] completions = RubyCompletion.Complete (basepath, contents, symbol, completionContext.TriggerLine-1);
+					ICompletionData[] completions = RubyCompletion.Complete (BasePath, contents, symbol, completionContext.TriggerLine-1);
 					if (null != completions) {
 						// Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
 						cdl.AddRange (completions);
@@ -79,15 +85,19 @@ namespace MonoDevelop.RubyBinding
 					symbol = (1 < tokens.Length)? string.Join ("::", tokens, 0, tokens.Length-1): tokens[0];
 					// Console.WriteLine ("RubyBinding: Completing {0}", symbol);
 					if (RubyCompletion.IsConstant (symbol)) {
-						string basepath = (null == Document.Project)? 
-							Document.FileName.FullPath.ParentDirectory: 
-							Document.Project.BaseDirectory.FullPath;
-						ICompletionData[] completions = RubyCompletion.Complete (basepath, contents, symbol, completionContext.TriggerLine-1);
+						ICompletionData[] completions = RubyCompletion.Complete (BasePath, contents, symbol, completionContext.TriggerLine-1);
 						if (null != completions) {
 							// Console.WriteLine ("RubyBinding: Got {0} completions", completions.Length);
 							cdl.AddRange (completions);
 						}
 					}
+				}
+				break;
+			default:
+				if (char.IsLetter (completionChar)) {
+					ICompletionData[] completions = RubyCompletion.CompleteGlobal (BasePath, Editor.Text, completionContext.TriggerLine-1);
+					cdl.AddRange (completions);
+					ResetTriggerOffset (completionContext);
 				}
 				break;
 			}
@@ -96,13 +106,24 @@ namespace MonoDevelop.RubyBinding
 			return (0 < cdl.Count)? cdl: null;
 		}// HandleCodeCompletion
 		
+		protected virtual void ResetTriggerOffset (CodeCompletionContext completionContext)
+		{
+			int i = completionContext.TriggerOffset;
+			
+			for (;
+			     1 < i && char.IsLetterOrDigit (Editor.GetCharAt (i));
+			     --i);
+			completionContext.TriggerOffset = i-1;
+		}// ResetTriggerOffset
+		
 		public override ICompletionDataList CodeCompletionCommand (CodeCompletionContext completionContext)
 		{
+			ICompletionDataList completions = null;
 			if (RubyLanguageBinding.IsRubyFile (Document.FileName)) {
 				int pos = completionContext.TriggerOffset;
-				return HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0]);
+				completions = HandleCodeCompletion(completionContext, Editor.GetText (pos - 1, pos)[0]);
 			}
-			return null;
+			return completions;
 		}// CodeCompletionCommand
 		
 		public override  IParameterDataProvider HandleParameterCompletion (CodeCompletionContext completionContext, char completionChar)

@@ -153,6 +153,28 @@ namespace MonoDevelop.RubyBinding
 		}
 		
 		/// <summary>
+		/// Perform completions in a global context
+		/// </summary>
+		/// <param name="basepath">
+		/// A <see cref="System.String"/>: The base path for the file (to fixup require)
+		/// </param>
+		/// <param name="contents">
+		/// A <see cref="System.String"/>: The contents of the file
+		/// </param>
+		/// <param name="line">
+		/// A <see cref="System.Int32"/>: The line of contents for symbol's context
+		/// </param>
+		/// <returns>
+		/// A <see cref="ICompletionData[]"/>
+		/// </returns>
+		public static ICompletionData[] CompleteGlobal (string basepath, string contents, int line)
+		{
+			List<ICompletionData> completions = new List<ICompletionData> ();
+			completions.AddRange (Complete (basepath, contents, "Module", line));
+			return completions.ToArray ();
+		}
+		
+		/// <summary>
 		/// Checks a code snippet for errors
 		/// </summary>
 		/// <param name="basepath">
