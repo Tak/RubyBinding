@@ -54,6 +54,11 @@ namespace MonoDevelop.RubyBinding
 		#region IListDataProvider implementation
 		public void Reset () { }
 		
+		public string GetMarkup (int n)
+		{
+			return GetText (n);
+		}// GetMarkup
+		
 		public string GetText (int n)
 		{
 			return Document.ParsedDocument.UserRegions.ElementAt (n).Name;

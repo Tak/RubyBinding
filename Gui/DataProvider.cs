@@ -84,6 +84,11 @@ namespace MonoDevelop.RubyBinding
 			return amb.GetString (x, OutputFlags.IncludeGenerics | OutputFlags.IncludeParameters | OutputFlags.ReformatDelegates);
 		}// GetString
 		
+		public string GetMarkup (int n)
+		{
+			return GetText (n);
+		}// GetMarkup
+		
 		public string GetText (int n)
 		{
 			return GetString (amb, memberList[n]);
